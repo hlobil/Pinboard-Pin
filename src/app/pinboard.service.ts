@@ -1,10 +1,10 @@
 import {Injectable} from '@angular/core';
-import {Http, URLSearchParams} from "@angular/http";
+import {Http, URLSearchParams} from '@angular/http';
 
-import {Observable} from "rxjs";
+import {Observable} from 'rxjs';
 
-import {StorageService} from "./storage.service";
-import {Post} from "./pinpage/pinpage.component";
+import {StorageService} from './storage.service';
+import {Post} from './pinpage/pinpage.component';
 
 export const pinboardPage = 'https://pinboard.in/';
 
@@ -25,25 +25,34 @@ export class PinboardService {
   // get an object via the Pinboard API
   httpGet(method: string, params?: any): Observable<any> {
     params = params || {};
-    if (!params.auth_token)
+    if (!params.auth_token) {
       return this.storage.get('token').switchMap(token => {
-          if (!token) Observable.throw(new Error('No API token!'));
+          if (!token) {
+            Observable.throw(new Error('No API token!'));
+          }
           params.auth_token = token;
           return this.httpGet(method, params);
         });
+      }
     params.format = 'json';
-    let search = new URLSearchParams();
-    for (let key in params) search.set(key, params[key]);
-    return this.http.get(
-      apiUrl + method, {search: search}).map(res => res.json());
+    const search = new URLSearchParams();
+    for (const key in params) {
+      if (params.hasOwnProperty(key)) {
+        search.set(key, params[key]);
+      }
+    }
+    return this.http.get(apiUrl + method, {search: search})
+    .map(res => res.json());
   }
 
   // check the given API token and memorize it if valid
   setToken(value: string): Observable<boolean> {
-    let values = value.split(':', 2);
-    if (values.length != 2) return Observable.of(false);
+    const values = value.split(':', 2);
+    if (values.length !== 2) {
+      return Observable.of(false);
+    }
     return this.httpGet('user/api_token', {auth_token: value}).map(
-      data => data.result == values[1]).switchMap(ok =>
+      data => data.result === values[1]).switchMap(ok =>
         ok ? this.storage.set({token: value}).map(() => true) :
              Observable.of(false));
   }
@@ -73,13 +82,17 @@ export class PinboardService {
   // add or replace bookmark with given attributes
   save(post: Post):
       Observable<string> {
-    let params: any = {url: post.url, description: post.title};
-    if (post.description) params.extended = post.description;
-    if (post.tags) params.tags = post.tags;
+    const params: any = {url: post.url, description: post.title};
+    if (post.description) {
+      params.extended = post.description;
+    }
+    if (post.tags) {
+      params.tags = post.tags;
+    }
     params.shared = post.unshared ? 'no' : 'yes';
     params.toread = post.toread ? 'yes' : 'no';
     return this.httpGet('posts/add', params).map(res =>
-      res.result_code == 'done' ? null : res.result_code);
+      res.result_code === 'done' ? null : res.result_code);
   }
 
   // delete bookmark with the given url
@@ -90,10 +103,14 @@ export class PinboardService {
   // get suggested tags for the given url
   suggest(url): Observable<any> {
     return this.httpGet('posts/suggest', {url: url}).map(data => {
-      let tags = {popular: [], recommended: []};
-      for (let d of data) {
-        if (d.popular) tags.popular.push(...d.popular);
-        if (d.recommended) tags.recommended.push(...d.recommended);
+      const tags = {popular: [], recommended: []};
+      for (const d of data) {
+        if (d.popular) {
+          tags.popular.push(...d.popular);
+        }
+        if (d.recommended) {
+          tags.recommended.push(...d.recommended);
+        }
       }
       return tags;
     });
@@ -114,16 +131,17 @@ export class PinboardService {
   // get a cached list of all used tags
   cachedTags(): Observable<string[]> {
     return this.storage.get('tags').switchMap(tags => {
-      let date = Date.now();
+      const date = Date.now();
       if (!tags || !tags.tags || !tags.date) {
         // no tags cached, retrieve tags first from Pinboard
         return this.tags().do(tags =>
           this.storage.set({tags: {tags: tags, date: date}}).subscribe());
       }
       // replace outdated tags in the background
-      if (tags.date > date || date - tags.date > cacheTimeout)
+      if (tags.date > date || date - tags.date > cacheTimeout){
         this.tags().subscribe(tags =>
           this.storage.set({tags: {tags: tags, date: date}}).subscribe());
+      }
       // but still return the cached tags for faster access
       return Observable.of(tags.tags);
     });
@@ -131,7 +149,9 @@ export class PinboardService {
 
   // update the cached list of all used tags
   updateTagCache(tags: string[]): Observable<any> {
-    if (!tags || !tags.length) return Observable.empty();
+    if (!tags || !tags.length) {
+      return Observable.empty();
+    }
     return this.storage.get('tags').flatMap(oldtags => {
       let oldlist, olddate;
       if (oldtags && oldtags.tags && oldtags.date) {
@@ -141,13 +161,18 @@ export class PinboardService {
         oldlist = [];
         olddate = Date.now();
       }
-      let oldlength = oldlist.length;
-      let newtags = {};
-      for (let tag of tags) newtags[tag] = true;
-      for (let tag of oldlist) newtags[tag] = true;
-      let newlist = Object.keys(newtags);
-      if (newlist.length > oldlength)
+      const oldlength = oldlist.length;
+      const newtags = {};
+      for (const tag of tags) { 
+        newtags[tag] = true;
+      }
+      for (const tag of oldlist) {
+        newtags[tag] = true;
+      }
+      const newlist = Object.keys(newtags);
+      if (newlist.length > oldlength) {
         return this.storage.set({tags: {tags: newlist, date: olddate}});
+      }
       return Observable.empty();
     });
   }
