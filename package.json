@@ -9,7 +9,7 @@
     "build:ext": "web-ext build --source-dir=dist --artifacts-dir=.",
     "build:zip": "npm run build:prod && npm run build:ext",
     "lint": "tslint \"src/**/*.ts\"",
-    "test": "web-ext run --source-dir=dist --verbose --firefox=/Applications/Firefox.app/Contents/MacOS/firefox-bin",
+    "test": "web-ext run --source-dir=dist --verbose --firefox=/Applications/FirefoxDeveloperEdition.app/Contents/MacOS/firefox-bin",
     "test:windows": "web-ext run --source-dir=dist --firefox=\"C:/Program Files/Mozilla Firefox/firefox.exe\""
   },
   "private": true,
@@ -22,7 +22,6 @@
     "@angular/platform-browser": "2.4.6",
     "@angular/platform-browser-dynamic": "2.4.6",
     "@angular/router": "3.4.6",
-    "@types/chrome": "0.0.38",
     "core-js": "2.4.1",
     "rxjs": "5.1.0",
     "ts-helpers": "1.1.2",
